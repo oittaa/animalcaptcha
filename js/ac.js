@@ -32,6 +32,7 @@ var AnimalCaptcha = new Class({
 	// Create new instance of captcha class
 	initialize: function(el, form){
 		this.container = $(el);
+		this.acFile = "class.AnimalCaptcha.php";
 
 		// Inject a hidden input with captcha answer into the form
 		this.answer = new Element("input", {
@@ -49,7 +50,7 @@ var AnimalCaptcha = new Class({
 	// Request new captcha
 	requestCaptcha: function()
 	{
-		new Request({url: "ac.php?generate_captcha", method: "get", onSuccess: function(response) {
+		new Request({url: this.acFile + "?generate_captcha", method: "get", onSuccess: function(response) {
 			this.container.set('html', '');
 			var imageList = response.split(",");
 			imageList.forEach(function(imageID)
@@ -70,7 +71,7 @@ var AnimalCaptcha = new Class({
 				});
 				captchaImageDiv.set('imageID', imageID);
 				var captchaImage = new Element("img", {
-					"src": "ac.php?get_image=" + imageID,
+					"src": this.acFile + "?get_image=" + imageID,
 					"class": "ac_image"
 				});
 				captchaImage.inject(captchaImageDiv);
@@ -86,6 +87,6 @@ var AnimalCaptcha = new Class({
 			image_array.push(img.get("imageID"));
 		});
 		this.answer.set("value", image_array.join(","));
-		new Request({url: "ac.php?check=" + image_array.join(","), method: "get", onSuccess: callback}).send();
+		new Request({url: this.acFile + "?check=" + image_array.join(","), method: "get", onSuccess: callback}).send();
 	}
 });

@@ -1,0 +1,86 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+
+<head>
+	<title>AnimalCaptcha example</title>
+	<meta http-equiv="content-type" content="application/xhtml+xml; charset=utf-8" />
+	<script type="text/javascript" src="js/mootools.js"></script>
+	<script type="text/javascript" src="js/ac.js"></script>
+	<script type="text/javascript">
+	
+	var ac;
+	window.addEvent("domready", function ()
+	{
+		ac = new AnimalCaptcha("ac", "form"); 
+		ac.addEvent("imagePicked", captchaImagePicked);
+
+		function captchaCheck(response)
+		{
+			if (response == "ok")
+			{
+				$('form').submit();
+			}
+			else
+			{
+				if (response == "error_not_enough")
+					alert("Wrong!\nYou didn't check them all!");
+				else if (response == "error_wrong")
+					alert("Wrong!\nYou didn't check only cats!");
+				else if (response == "error_regenerate")
+				{
+					alert("Wrong!\nYou've exceeded try count for this captcha.\nGenerating new one...");
+					ac.requestCaptcha();
+				}
+				else 
+					alert ("Unknown error!");
+			}
+		}
+
+		function captchaImagePicked(count)
+		{
+			$('selected_num').set('text', count);
+		}
+
+		$('form').addEvent("submit", function(e){
+			e.preventDefault();
+			ac.checkCaptcha(captchaCheck);
+		});
+	});
+
+	</script>
+	<style type="text/css">
+		#ac {
+			border: 1px solid #777;
+			width: 268px;
+			height: 268px;
+		}
+		.ac_image_div {
+			float: left;
+			width: 80px;
+			height: 80px;
+			padding: 4px;
+			cursor: pointer;
+		}
+		.ac_image {
+			border: 2px solid #999;
+		}
+		.ac_image_div.selected .ac_image {
+			border: 2px solid #0f0 !important;
+		}
+	</style>
+</head>
+
+<body>
+	<h3>AnimalCaptcha example</h3>
+
+	<form method='post' action='form.php' id='form'>
+	<p>Check if you are a human.<br />Select <em>all</em> cats from the images below.</p>
+	<div id="ac">
+	</div>
+	<p>Selected <span id='selected_num'>0</span> cat(s).</p>
+
+	<input type="submit" value="Submit!" />
+	</form>
+</body>
+
+</html>

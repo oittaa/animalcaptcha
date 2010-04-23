@@ -93,7 +93,7 @@ class AnimalCaptcha
 		}
 		
 		// Save image array into session
-		if ($_SESSION['ac_images'])
+		if (isset($_SESSION['ac_images']))
 			unset ($_SESSION['ac_images']);
 
 		$_SESSION['ac_images'] = $images;

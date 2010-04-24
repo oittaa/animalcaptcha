@@ -168,7 +168,10 @@ class AnimalCaptcha
 				$this->getImageGD($filename);
 
 			else
+			{
+				Header("Content-type: image/jpeg");
 				print file_get_contents($filename);
+			}
 		}
 	}
 

@@ -13,7 +13,10 @@ $ac = new AnimalCaptcha;
 
 // Pick an action
 if (isset($_GET['generate_captcha']))
-	$ac->generateCaptcha();
+	print implode( ',', $ac->generateCaptcha() );
 else if (isset($_GET['get_image']))
-	$ac->getImage($_GET['get_image']);
+{
+	Header("Content-type: image/jpeg");
+	print $ac->getImage($_GET['get_image']);
+}
 ?>

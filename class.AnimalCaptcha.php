@@ -93,7 +93,7 @@ class AnimalCaptcha
 		{
 			$output[] = $image['id'];
 		}
-		print implode(",", $output);
+		return $output;
 	}
 
 	// ImageMagick's processing
@@ -113,9 +113,7 @@ class AnimalCaptcha
 		$image->setImageCompressionQuality($quality);
 		$image->modulateImage($h, $s, $l);
 
-		// Print to browser
-		Header("Content-type: image/jpeg");
-		print $image;
+		return $image;
 	}
 
 	// PHP GD processing when Imagick is not available
@@ -135,10 +133,9 @@ class AnimalCaptcha
 		imagefilter($image, IMG_FILTER_CONTRAST, $contrast);
 		imagefilter($image, IMG_FILTER_COLORIZE, $r, $g, $b, 0);
 
-		// Print to browser
-		Header("Content-type: image/jpeg");
-		imagejpeg($image, NULL, $quality);
+		imagejpeg($image, $img, $quality);
 		imagedestroy($image);
+		return $img;
 	}
 
 
@@ -151,15 +148,14 @@ class AnimalCaptcha
 
 			// Pass the file to image processing or just display it
 			if ($this->use_imagick && extension_loaded('imagick'))
-				$this->getImageImagick($filename);
+				return $this->getImageImagick($filename);
 
 			else if ($this->use_gd && extension_loaded('gd'))
-				$this->getImageGD($filename);
+				return $this->getImageGD($filename);
 
 			else
 			{
-				Header("Content-type: image/jpeg");
-				print file_get_contents($filename);
+				return file_get_contents($filename);
 			}
 		}
 	}

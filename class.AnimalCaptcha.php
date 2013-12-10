@@ -100,7 +100,7 @@ class AnimalCaptcha
 	{
 		if ( isset( $_SESSION['ac_images'] ) )
 		{
-			$output = [];
+			$output = array();
 			foreach( $_SESSION['ac_images'] as $img )
 			{
 				$output[] = $img['id'];

@@ -95,6 +95,21 @@ class AnimalCaptcha
 		}
 		return $output;
 	}
+	
+	public function getCaptcha()
+	{
+		if ( isset( $_SESSION['ac_images'] ) )
+		{
+			$output = [];
+			foreach( $_SESSION['ac_images'] as $img )
+			{
+				$output[] = $img['id'];
+			}
+			return $output;
+		}
+		else
+			return $this->generateCaptcha();
+	}
 
 	// ImageMagick's processing
 	public function getImageImagick($filename)
@@ -121,6 +136,7 @@ class AnimalCaptcha
 	{
 		// Load the image
 		$image = imagecreatefromjpeg($filename);
+		$img = null;
 
 		// Randomize contrast, colorization and quality
 		$contrast = rand(-10, 10);

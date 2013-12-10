@@ -10,7 +10,6 @@ if (!isset($_SESSION))
 
 // Load the class
 $ac = new AnimalCaptcha;
-
 // Pick an action
 if (isset($_GET['generate_captcha']))
 	print implode( ',', $ac->generateCaptcha() );

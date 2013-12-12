@@ -7,8 +7,8 @@ class AnimalCaptcha
 	public $good_images = 12; // Number of good images
 	public $bad_images  = 45; // Number of bad images
 
-	public $image_count = 9;  // Number of images to show
-	public $good_count  = 1;  // Number of good images to display in the grid
+	public $image_count;	  // Number of images to show
+	public $good_count;  	  // Number of good images to display in the grid
 
 	public $rnd_good = true;  // Randomize number of good images
 							  // $good_count becomes maximum number
@@ -18,18 +18,31 @@ class AnimalCaptcha
 
 	public $max_check_count = 3; // Maximal number of checks per captcha, per user
 								 // 0 if unlimited
+								 
+	public $session_name;	  // Session namespace to store generated captcha stuff
+							  // in case site has 2 separate forms using ac
+
+	public function __construct( $session_name = 'animal_captcha' )
+	{
+		$this->session_name = $session_name;
+	}
 
 	// Generate images for the captcha
-	public function generateCaptcha()
+	public function generateCaptcha( $image_count = 9, $good_count = 1 )
 	{
-		$_SESSION['ac_check_count'] = 0;
+		$this->image_count = $image_count;
+		$this->good_count = $good_count;
+
+		$_SESSION[$this->session_name] = array();
+
+		$_SESSION[$this->session_name]['ac_check_count'] = 0;
 
 		if ($this->rnd_good == false)
 			$good = $this->good_count;
 		else
 			$good = rand(1, $this->good_count);
 
-		$_SESSION['ac_images_good_count'] = $good;
+		$_SESSION[$this->session_name]['ac_images_good_count'] = $good;
 
 		$good_history = array();
 		$bad_history = array();
@@ -82,10 +95,10 @@ class AnimalCaptcha
 		}
 		
 		// Save image array into session
-		if (isset($_SESSION['ac_images']))
-			unset ($_SESSION['ac_images']);
+		if (isset($_SESSION[$this->session_name]['ac_images']))
+			unset ($_SESSION[$this->session_name]['ac_images']);
 
-		$_SESSION['ac_images'] = $images;
+		$_SESSION[$this->session_name]['ac_images'] = $images;
 
 		// Print image ids to the browser
 		$output = array();
@@ -96,19 +109,19 @@ class AnimalCaptcha
 		return $output;
 	}
 	
-	public function getCaptcha()
+	public function getCaptcha( $image_count = 9, $good_count = 1 )
 	{
-		if ( isset( $_SESSION['ac_images'] ) )
+		if ( isset( $_SESSION[$this->session_name]['ac_images'] ) )
 		{
 			$output = array();
-			foreach( $_SESSION['ac_images'] as $img )
+			foreach( $_SESSION[$this->session_name]['ac_images'] as $img )
 			{
 				$output[] = $img['id'];
 			}
 			return $output;
 		}
 		else
-			return $this->generateCaptcha();
+			return $this->generateCaptcha( $image_count, $good_count );
 	}
 
 	// ImageMagick's processing
@@ -158,9 +171,9 @@ class AnimalCaptcha
 	// Return an image based on random image ID
 	public function getImage($id)
 	{
-		if ($_SESSION['ac_images'][$id])
+		if ($_SESSION[$this->session_name]['ac_images'][$id])
 		{
-			$filename = $_SESSION['ac_images'][$id]['filename'];
+			$filename = $_SESSION[$this->session_name]['ac_images'][$id]['filename'];
 
 			// Pass the file to image processing or just display it
 			if ($this->use_imagick && extension_loaded('imagick'))
@@ -180,24 +193,24 @@ class AnimalCaptcha
 	public function check($list)
 	{
 		// Raise check count
-		if (!isset($_SESSION['ac_check_count']))
-			$_SESSION['ac_check_count'] = 1;
+		if (!isset($_SESSION[$this->session_name]['ac_check_count']))
+			$_SESSION[$this->session_name]['ac_check_count'] = 1;
 		else 
-			$_SESSION['ac_check_count']++;
+			$_SESSION[$this->session_name]['ac_check_count']++;
 
 		// Check if user exceeded check count
-		if ($this->max_check_count && $_SESSION['ac_check_count'] > $this->max_check_count)
+		if ($this->max_check_count && $_SESSION[$this->session_name]['ac_check_count'] > $this->max_check_count)
 			return "error_regenerate";
 
 		// Check if user submitted correct number of id's
 		$check_list = explode(",", $list);
-		if (count(array_unique($check_list)) != $_SESSION['ac_images_good_count'])
+		if (count(array_unique($check_list)) != $_SESSION[$this->session_name]['ac_images_good_count'])
 			return "error_not_enough";
 
 		// Check the id's
 		foreach ($check_list as $check)
 		{
-			if (!$_SESSION['ac_images'][$check]['is_good'])
+			if (!$_SESSION[$this->session_name]['ac_images'][$check]['is_good'])
 				return "error_wrong";
 		}
 		

@@ -2,7 +2,7 @@
 class AnimalCaptcha 
 {
     // CONFIGURATION
-    public $img_dir     = "img/animalcaptcha"; // Directory with captcha images
+    public $img_dir     = "images"; // Directory with captcha images
 
     public $good_images = 12; // Number of good images
     public $bad_images  = 45; // Number of bad images

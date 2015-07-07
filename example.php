@@ -1,90 +1,118 @@
-<html>
-<head>
-<title>Animal Captcha Example</title>
-<style type="text/css">
-body
-{
-    font-family: sans;
-    text-align: center;
-}
-.captcha
-{
-    padding: 10px;
-    background: #999;
-    border-radius: 10px;
-    display: inline-block;
-}
-.captcha-image
-{
-    display: inline-block;
-    border: 3px solid transparent;
-}
-.captcha-image.selected
-{
-    border-color: green;
-}
-.controls
-{
-}
-button
-{
-    margin-top: 10px;
-    border: 3px solid #333;
-    border-radius: 5px;
-    font-size: 20pt;
-}
-</style>
-</head>
-<body>
-<?
-/* Init animal captcha */
-require_once( 'class.AnimalCaptcha.php' );
+<?php
+// Start or acquire a session if needed
 if (!isset($_SESSION))
 {
-    session_start ();
+    session_start();
     header("Cache-control: private");
 }
-$ac = new AnimalCaptcha();
-if ( !isset( $_POST['captcha'] ) )
-{
 ?>
-<form method="post">
-<div class="captcha">
-    <h3>To prove you are human, please select the elephant:</h3>
-    <input type="hidden" name="captcha" value="<?=@$_POST['captcha']?>" />
-    <?
-    $sel = @$_POST['captcha'] or null;
-    foreach( $ac->getCaptcha() as $imgid ) { ?>
-    <div class="captcha-image<?=$sel==$imgid?' selected':''?>" data-id="<?=$imgid?>"><img src="captcha.php?get_image=<?=$imgid?>"></div>
-    <? } ?>
-    <div class="controls">
-        <button type="submit">Confirm</button>
-    </div>
-</div>
-</form>
-<? } else {
-    $capt_status = $ac->check( $_POST['captcha'] );
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>AnimalCaptcha example</title>
+	<script type="text/javascript" src="js/mootools.js"></script>
+	<script type="text/javascript" src="js/ac.js"></script>
+	<script type="text/javascript">
+	var ac;
+	window.addEvent("domready", function ()
+	{
+		ac = new AnimalCaptcha("ac", "form"); 
+		ac.addEvent("imagePicked", captchaImagePicked);
 
-    if ( $capt_status == 'ok' )
+		function captchaCheck(response)
+		{
+			if (response == "ok")
+			{
+				$('form').submit();
+			}
+			else
+			{
+				if (response == "error_not_enough")
+					alert("Wrong!\nYou didn't check them all!");
+				else if (response == "error_wrong")
+					alert("Wrong!\nYou didn't check only elephants!");
+				else if (response == "error_regenerate")
+				{
+					alert("Wrong!\nYou've exceeded try count for this captcha.\nGenerating new one...");
+					ac.requestCaptcha();
+				}
+				else
+					alert ("Unknown error!");
+			}
+		}
+
+		function captchaImagePicked(count)
+		{
+			$('selected_num').set('text', count);
+		}
+
+		$('form').addEvent("submit", function(e){
+			e.preventDefault();
+			ac.checkCaptcha(captchaCheck);
+		});
+	});
+
+	</script>
+	<style type="text/css">
+		#ac {
+			border: 1px solid #777;
+			width: 268px;
+			height: 268px;
+		}
+		.ac_image_div {
+			float: left;
+			width: 80px;
+			height: 80px;
+			padding: 4px;
+			cursor: pointer;
+		}
+		.ac_image {
+			border: 2px solid #999;
+		}
+		.ac_image_div.selected .ac_image {
+			border: 2px solid #0f0 !important;
+		}
+	</style>
+</head>
+
+<body>
+	<h3>AnimalCaptcha example</h3>
+<?php
+if (!empty($_POST))
+{
+    require_once "class.AnimalCaptcha.php";
+
+    // Initialize AnimalCaptcha class
+    $ac = new AnimalCaptcha;
+
+    // Didn't send captcha answer?
+    if (empty($_POST['captcha']))
     {
-        ?><h1>Captcha verification Succeeded!</h1><?
+        print "No captcha answer found!"; // or redirect to error page
+    }
+    // Check captcha answer
+    else if ($ac->check($_POST['captcha']) !== "ok")
+    {
+        print "Wrong captcha answer!"; // or redirect to error page
     }
     else
     {
-        ?><h2>Catcha verification failed!</h2>
-        <p>Reason: <?=$capt_status?></p>
-        <?
+        //////////////////////////////////////
+        // Put your form processing here... //
+        //////////////////////////////////////
+        print "Congratulations!<br />Form sucessfully submitted!";
     }
-} ?>
-<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
-<script type="text/javascript">
-$(document).ready(function() {  //Captcha
-    $('.captcha').on( 'click.captcha', '.captcha-image', function(){
-        $(".captcha .selected").removeClass("selected");
-        $(this).addClass("selected");
-        $( '.captcha input' ).val( $( this ).data( 'id' ) );
-    });
-} );
-</script>
+}
+?>
+	<hr>
+	<form method='post' action='example.php' id='form'>
+	<p>Check if you are a human.<br />Select <em>all</em> elephants from the images below.</p>
+	<div id="ac">
+	</div>
+	<p>Selected <span id='selected_num'>0</span> elephant(s).</p>
+
+	<input type="submit" value="Submit!" />
+	</form>
 </body>
 </html>

@@ -41,6 +41,7 @@ if (!function_exists('random_bytes')) {
         function random_bytes($bytes)
         {
             static $fp = null;
+            $buf = '';
             if ($fp === null) {
                 if (is_readable('/dev/arandom')) {
                     $fp = fopen('/dev/arandom', 'rb');
@@ -149,26 +150,20 @@ if (!function_exists('random_int')) {
         if ($min > $max) {
              throw new Exception('Minimum value must be less than or equal to the maximum value');
         }
-        $range = $max - $min;
-
-        /**
-         * Test for integer overflow:
-         */
-        if (!is_int($range)) {
-             throw new Exception('An integer overflow occurred on the range between $min and $max');
-        }
+        $range = bcsub((string)$max, (string)$min);
 
         /**
          * Do we have a meaningful range? If not, return the minimum value.
          */
-        if ($range < 1) {
+        if (bccomp($range, '1') === -1) {
             return $min;
         }
 
         /**
          * Initialize variables to 0
          */
-        $rejections = $bits = $bytes = $mask = 0;
+        $rejections = $bits = $bytes = 0;
+        $mask = '0';
 
         $tmp = $range;
         /**
@@ -180,13 +175,13 @@ if (!function_exists('random_int')) {
          * $bits is effectively ceil(log($range, 2)) without dealing with 
          * type juggling
          */
-        while ($tmp > 0) {
+        while (bccomp($tmp, '0') === 1) {
             if ($bits % 8 === 0) {
                ++$bytes;
             }
             ++$bits;
-            $tmp >>= 1;
-            $mask = $mask << 1 | 1;
+            $tmp = bcdiv($tmp, '2');
+            $mask = bcadd(bcmul($mask, '2'), '1');
         }
 
         /**
@@ -210,27 +205,27 @@ if (!function_exists('random_int')) {
              * Let's turn $rval (random bytes) into an integer
              * 
              * This uses bitwise operators (<< and |) to build an integer
-             * out of the values extracted from ord()
+             * out of the values extracted from ord() and applies the mask
              * 
              * Example: [9F] | [6D] | [32] | [0C] =>
              *   159 + 27904 + 3276800 + 201326592 =>
              *   204631455
              */
-            $val = 0;
+            $val = '0';
+            $mask_tmp = $mask;
             for ($i = 0; $i < $bytes; ++$i) {
-                $val |= (ord($rval[$i]) << ($i * 8));
+                $tmp = (int)bcmod($mask_tmp, '256');
+                $mask_tmp = bcdiv($mask_tmp, '256');
+                $val = bcadd($val, bcmul((string)(ord($rval[$i]) & $tmp), bcpow('2', (string)($i*8))));
             }
 
-            // Apply mask
-            $val &= $mask;
-
-            if ($val > $range) {
+            if (bccomp($val, $range) === 1) { // $val is greater than $range
                 ++$rejections;
             }
             // If $val is larger than the maximum acceptable number for
             // $min and $max, we discard and try again.
-        } while ($val > $range);
-        return (int) ($min + $val);
+        } while (bccomp($val, $range) === 1);
+        return (int) bcadd((string)$min, $val);
     }
 }
 

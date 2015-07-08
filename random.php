@@ -278,6 +278,15 @@ if (!function_exists('RandomCompat_substr')) {
     }
 }
 
+/**
+ * Generate $length characters long random string,
+ * which contains letters from $alphabet.
+ *
+ * @param int $length (optional, defaults to 26)
+ * @param string $alphabet (optional, defaults to 'abcdefghijklmnopqrstuvwxyz234567')
+ *
+ * @return string
+ */
 function random_str($length = 26, $alphabet = 'abcdefghijklmnopqrstuvwxyz234567')
 {
     if ($length < 1) {
